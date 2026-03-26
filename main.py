@@ -1,4 +1,7 @@
 
+#TODO erro ao digitar constantes (e, pi, ...)
+#TODO reconhecer ln como base natural e log como base 10
+
 import sympy as sp
 import methods
  

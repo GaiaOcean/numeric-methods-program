@@ -95,27 +95,32 @@ class CalculadoraFrontEnd:
         f_raw = self.entry_funcao.get()
         a_raw, b_raw = self.entry_a.get(), self.entry_b.get()
         n_str, casas_str = self.entry_n.get(), self.entry_casas.get()
-
+ 
         if not all([f_raw, a_raw, b_raw, n_str, casas_str]):
             messagebox.showwarning("Aviso", "Preencha todos os campos!"); return
-
+ 
         try:
             a = float(sp.sympify(a_raw, locals={'pi': sp.pi, 'e': sp.E}))
             b = float(sp.sympify(b_raw, locals={'pi': sp.pi, 'e': sp.E}))
             n, casas = int(n_str), int(casas_str)
-
+ 
             f_sym = sp.sympify(f_raw, locals={
-                'e': sp.E, 'pi': sp.pi, 'ln': sp.log, 
+                'e': sp.E, 'pi': sp.pi, 'ln': sp.log,
                 'log': lambda x: sp.log(x, 10)
             })
-
+ 
             passo = methods.calcularPasso(a, b, n)
-            
-            # Sincronizado com o seu back-end (que retorna apenas a soma)
             resultados = methods.criarTabela(f_raw, f_sym, a, b, n, casas)
             soma = methods.calcularSomatorio(f_raw, f_sym, a, b, n, casas)
-
-            # Reconstrói a string da soma para o relatório
+ 
+            # --- CONSTRUÇÃO DA TABELA VISUAL NO RELATÓRIO ---
+            tabela_relatorio = f"{'x':<10} | {'f(x)':<10}\n"
+            tabela_relatorio += "-" * 25 + "\n"
+            for i, res in enumerate(resultados):
+                ponto_x = a + (i * passo)
+                tabela_relatorio += f"{ponto_x:<10.4f} | {res:<10.{casas}f}\n"
+ 
+            # Montagem da fórmula da soma
             equacao_lista = []
             for i, res in enumerate(resultados):
                 if i == 0 or i == len(resultados) - 1:
@@ -123,33 +128,39 @@ class CalculadoraFrontEnd:
                 else:
                     equacao_lista.append(f"{res:.{casas}f}")
             soma_str = " + ".join(equacao_lista)
-
+ 
             area = methods.calcularAreaTrapezio(a, b, soma, casas, n)
             e_arr = methods.calcularErroDeArredondamento(a, b, n, casas)
-            
-            # CORREÇÃO AQUI: Passando exatamente os 6 argumentos que o seu methods.py pede:
-            # f_str, funcao, a, b, passo, num_trapezios
             max_f2 = methods.maxSegundaDerivada(f_raw, f_sym, a, b, passo, n)
-            
             e_tru = methods.calcularErroDeTruncamento(passo, casas, max_f2, n)
             e_tot = e_arr + e_tru
-
+ 
+            # --- EXIBIÇÃO NO VISOR ---
             self.visor_relatorio.delete(1.0, tk.END)
-            rel = f"=== RELATÓRIO: f(x) = {f_raw} ===\n"
-            rel += f"Intervalo: [{a_raw}, {b_raw}] | n = {n}\n"
-            rel += f"Passo (h): {passo}\n\n"
-            rel += f"1. ÁREA CALCULADA\n∑ = {soma_str}\n"
-            rel += f"∑ = {soma:.{casas}f}\nÁrea ≈ {area:.{casas}f}\n\n"
-            rel += f"2. ERROS ESTIMADOS\n|f''(x)|_max = {max_f2:.{casas}f}\n"
-            rel += f"|Ea|   <= {e_arr:.{casas}f}\n|Etru| <= {e_tru:.{casas}f}\n"
+            rel = f"=== RELATÓRIO: f(x) = {f_raw} ===\n\n"
+           
+            rel += "1. TABELA DE PONTOS:\n"
+            rel += tabela_relatorio + "\n"
+           
+            rel += f"2. CÁLCULO DA ÁREA (h = {passo})\n"
+            rel += f"∑ = {soma_str}\n"
+            rel += f"∑ = {soma:.{casas}f}\n"
+            rel += f"Área ≈ {area:.{casas}f}\n\n"
+           
+            rel += "3. ANÁLISE DE ERROS:\n"
+            rel += f"|f''(x)|_max = {max_f2:.{casas}f}\n"
+            rel += f"|Ea|   <= {e_arr:.{casas}f}\n"
+            rel += f"|Etru| <= {e_tru:.{casas}f}\n"
             rel += f"|Etot| <= {e_tot:.{casas}f}\n\n"
-            rel += f"3. CONCLUSÃO\n∈ ({area:.{casas}f} ± {e_tot:.{casas}f})\n"
+           
+            rel += "4. RESULTADO FINAL:\n"
+            rel += f"∈ ({area:.{casas}f} ± {e_tot:.{casas}f})\n"
             rel += f"Intervalo: [{area - e_tot:.{casas}f}; {area + e_tot:.{casas}f}]"
-            
+           
             self.visor_relatorio.insert(tk.END, rel)
-
+ 
         except Exception as err:
-            messagebox.showerror("Erro Matemático", f"Verifique a função ou valores.\nDetalhe: {err}")
+            messagebox.showerror("Erro Matemático", f"Detalhe: {err}")
 
 if __name__ == "__main__":
     root = tk.Tk()

@@ -22,7 +22,8 @@ if __name__ == "__main__":
         'ln': sp.log,               # ln(x) interpreta como logaritmo natural
         'log': lambda x: sp.log(x, 10) # log(x) interpreta como base 10
     })
-
+    tabela = methods.criarTabela(f,funcao,a,b,num_trapezios,num_casas_decimais)
+    print()
     # Chamadas das funções do methods.py com os parâmetros sincronizados
     soma = methods.calcularSomatorio(funcao, f, a, b, num_trapezios, num_casas_decimais)
     print()

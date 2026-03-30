@@ -25,7 +25,6 @@ def criarTabela(f_str:str, funcao, a:float, b:float, num_trapezios:int, casas_de
     possuiVariavel = temVariavel(f_str)
     lista_dos_resultados = list()
 
-    # Prepara a função para ser executada pelo Python
     if possuiVariavel:
         var = list(funcao.free_symbols)[0]
         math_function = sp.lambdify(var, funcao)
@@ -34,10 +33,9 @@ def criarTabela(f_str:str, funcao, a:float, b:float, num_trapezios:int, casas_de
     
     print(f"\n{'x':>3} {'|':>5} {'f(x)':>7}")
     print('-' * 20)
-
-    # Uso do 'for' para garantir que o ponto_avaliado chegue exatamente ao limite b
+   
+   #calcula o valor da função para cada ponto
     for i in range(num_trapezios + 1):
-        # ponto_avaliado: O valor de x na posição atual da partição
         ponto_avaliado = a + (i * passo)
         
         resultado = math_function(ponto_avaliado) if possuiVariavel else math_function()
@@ -50,7 +48,7 @@ def criarTabela(f_str:str, funcao, a:float, b:float, num_trapezios:int, casas_de
 
 def calcularSomatorio(f_str, funcao, a:float, b:float, num_trapezios:int, casas_decimais:int) -> float:
     """
-    Soma as áreas dos trapézios seguindo a Regra dos Trapézios.
+    Soma as áreas dos trapézios seguindo a Regra dos Trapézios
     """
     resultados = criarTabela(f_str, funcao, a, b, num_trapezios, casas_decimais)
     n = len(resultados)
@@ -58,7 +56,6 @@ def calcularSomatorio(f_str, funcao, a:float, b:float, num_trapezios:int, casas_
     equacao_soma_areas = [] 
 
     for i in range(n):
-        # f(x0) e f(xn) são divididos por 2 conforme a fórmula
         if i == 0 or i == n-1:
             soma += resultados[i] / 2
             equacao_soma_areas.append(f"({resultados[i]:.{casas_decimais}f}/2)")
@@ -90,7 +87,6 @@ def maxSegundaDerivada(f_str:str, funcao, a:float, b:float, passo:float, num_tra
     valor_max = 0
     if temVariavel(f_str):
         var = list(funcao.free_symbols)[0]
-        # Derivamos o objeto simbólico 'funcao' para precisão
         segunda_derivada_sym = sp.diff(funcao, var, 2)
         segunda_derivada = sp.lambdify(var, segunda_derivada_sym)
 

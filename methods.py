@@ -19,7 +19,7 @@ def calcularPasso(a:float, b:float, num_trapezios:int) -> float:
 
 def criarTabela(f_str:str, funcao, a:float, b:float, num_trapezios:int, casas_decimais:int) -> list:
     """
-    Gera os pontos (x, f(x)) e imprime a tabela no terminal.
+    Gera os pontos (x, f(x)) e imprime a tabela.
     """
     passo = calcularPasso(a, b, num_trapezios)
     possuiVariavel = temVariavel(f_str)
@@ -46,11 +46,10 @@ def criarTabela(f_str:str, funcao, a:float, b:float, num_trapezios:int, casas_de
     print('-' * 20)
     return lista_dos_resultados
 
-def calcularSomatorio(f_str, funcao, a:float, b:float, num_trapezios:int, casas_decimais:int) -> float:
+def calcularSomatorio(resultados:list, casas_decimais:int) -> float:
     """
-    Soma as áreas dos trapézios seguindo a Regra dos Trapézios
+    Soma as áreas dos trapézios.
     """
-    resultados = criarTabela(f_str, funcao, a, b, num_trapezios, casas_decimais)
     n = len(resultados)
     soma = 0
     equacao_soma_areas = [] 
@@ -67,7 +66,7 @@ def calcularSomatorio(f_str, funcao, a:float, b:float, num_trapezios:int, casas_
     return soma
 
 def calcularAreaTrapezio(a, b, soma:float, casas_decimais:int, num_trapezios:int) -> float:
-    """Calcula a área final multiplicando o somatório pelo passo h."""
+    """Calcula a área final multiplicando o somatório das áreas pelo passo h."""
     altura = calcularPasso(a, b, num_trapezios)
     area = soma * altura
     print(f"Area ≈ (soma das areas) * h")
@@ -78,7 +77,8 @@ def calcularErroDeArredondamento(a:float, b:float, num_trapezios:int, casas_deci
     """Calcula o limite superior do erro gerado pelo corte de casas decimais."""
     passo = calcularPasso(a, b, num_trapezios)
     erro = abs((num_trapezios) * 0.5 * 10**(-casas_decimais) * passo)
-    print(f"|Ea| <= n * 0.5 * 10^(-casas_decimais) * h")
+    print(f"|Ea| <= (n) * 0.5 * 10^(-casas) * (h)")
+    print(f"|Ea| <= ({num_trapezios}) * 0.5 * 10^-{casas_decimais} * ({passo})")
     print(f"|Ea| <= {erro} ≈ {erro:.{casas_decimais}f}")
     return erro
 
@@ -97,10 +97,11 @@ def maxSegundaDerivada(f_str:str, funcao, a:float, b:float, passo:float, num_tra
                 valor_max = val
     return valor_max 
 
-def calcularErroDeTruncamento(passo:float, casas_decimais:int, max_segunda_derivada:float, num_trapezios:int) -> float:
-    """Calcula o erro inerente ao método (a curvatura que o trapézio não cobre)."""
+def calcularErroDeTruncamento(f_str:str, passo:float, casas_decimais:int, max_segunda_derivada:float, num_trapezios:int, a:float, b:float) -> float:
+    """Calcula o erro de truncamento: diferença entre a área real e a aproximada por trapézios ao considerar f linear em [a, b]."""
     erro = abs(num_trapezios * (passo**3 / 12) * max_segunda_derivada)
-    print(f"|Etru| <= n * (h³/12) * max|f''(x)|")
+    print(f"|Etru| <= (n) * (h³/12) * max|f''(x)|")
+    print(f"|Etru| <= ({num_trapezios}) * ({passo}³ / 12) * max|{f_str}''| x ∈ [{a}, {b}]")
     print(f" max|f''(x)| => {max_segunda_derivada} ≈ {max_segunda_derivada:.{casas_decimais}f}")
     print(f"|Etru| <= {erro} ≈ {erro:.{casas_decimais}f}")
     return erro
@@ -108,11 +109,11 @@ def calcularErroDeTruncamento(passo:float, casas_decimais:int, max_segunda_deriv
 def calcularErroTotal(Etru:float, Earr:float, casas_decimais:int) -> float:
     """Soma o erro de arredondamento e o de truncamento."""
     erro = abs(Etru + Earr)
-    print(f"|Etot| <= |Ea| + |Etru| <= {Earr} + {Etru} ≈ {erro:.{casas_decimais}f}")
+    print(f"|Etot| <= |Ea| + |Etru| <= {Earr} + {Etru} <= {Earr + Etru} ≈ {erro:.{casas_decimais}f} (com {casas_decimais} casas)")
     return erro
 
 def respostaFinal(f_str:str, funcao, a:float, b:float, area:float, casas_decimais:int, Etot):
-    """Exibe o resultado final com a notação de intervalo de confiança."""
+    """Exibe o resultado final com as notações de parenteses e colchetes."""
     if temVariavel(f_str):
         var = list(funcao.free_symbols)[0]
         funcao_integral = sp.Integral(funcao, (var, a, b))

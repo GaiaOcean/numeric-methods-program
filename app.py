@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 import sympy as sp
-import methods # Usando o seu arquivo original sem alterações
+import io
+import sys
+import methods 
 
 class AppCalculadoraPUC:
     def __init__(self, root):
@@ -83,53 +85,59 @@ class AppCalculadoraPUC:
 
     def executar(self):
         try:
+            buffer = io.StringIO()
+            sys.stdout = buffer
             f_txt = self.ent_f.get()
-            a = float(sp.sympify(self.campos['a'].get(), locals={'pi':sp.pi, 'e':sp.E}))
-            b = float(sp.sympify(self.campos['b'].get(), locals={'pi':sp.pi, 'e':sp.E}))
+
+            a = float(sp.sympify(self.campos['a'].get(), locals={'pi': sp.pi, 'e': sp.E}))
+            b = float(sp.sympify(self.campos['b'].get(), locals={'pi': sp.pi, 'e': sp.E}))
             n = int(self.campos['n'].get())
             casas = int(self.campos['casas'].get())
-            f_sym = sp.sympify(f_txt, locals={'e':sp.E, 'pi':sp.pi, 'ln':sp.log, 'log':lambda x: sp.log(x,10)})
 
-            # Chamadas sincronizadas com o SEU methods.py
-            h = methods.calcularPasso(a, b, n)
-            tabela = methods.criarTabela(f_txt, f_sym, a, b, n, casas)
-            soma = methods.calcularSomatorio(f_txt, f_sym, a, b, n, casas)
+            f_sym = sp.sympify(f_txt, locals={
+                'e': sp.E,
+                'pi': sp.pi,
+                'ln': sp.log,
+                'log': lambda x: sp.log(x, 10)
+            })
+
+            print(f"Função: f(x) = {f_txt}\n")
+
+            passo = methods.calcularPasso(a, b, n)
+            print(f"Passo (h) = {passo}\n")
+
+            resultados = methods.criarTabela(f_txt, f_sym, a, b, n, casas)
+            print()
+
+            soma = methods.calcularSomatorio(resultados, casas)
+            print()
+
             area = methods.calcularAreaTrapezio(a, b, soma, casas, n)
-            e_arr = methods.calcularErroDeArredondamento(a, b, n, casas)
-            max_f2 = methods.maxSegundaDerivada(f_txt, f_sym, a, b, h, n)
-            e_tru = methods.calcularErroDeTruncamento(h, casas, max_f2, n)
-            e_tot = methods.calcularErroTotal(e_tru, e_arr, casas)
+            print()
 
-            # Cálculo dos limites para a representação em colchetes
-            lim_inf = area - e_tot
-            lim_sup = area + e_tot
+            erro_arredondamento = methods.calcularErroDeArredondamento(a, b, n, casas)
+            print()
+
+            max_segunda_derivada = methods.maxSegundaDerivada(f_txt, f_sym, a, b, passo, n)
+            print()
+
+            erro_truncamento = methods.calcularErroDeTruncamento(f_txt, passo, casas, max_segunda_derivada, n, a, b)
+            print()
+
+            erro_total = methods.calcularErroTotal(erro_truncamento, erro_arredondamento, casas)
+            print()
+
+            methods.respostaFinal(f_txt, f_sym, a, b, area, casas, erro_total)
+
+            sys.stdout = sys.__stdout__
+
+            rel = buffer.getvalue()
 
             self.visor.delete(1.0, tk.END)
-            rel = f"=== RELATÓRIO TÉCNICO: f(x) = {f_txt} ===\n\n"
-            rel += f"1. PASSO: h = (b - a) / n = {h}\n\n"
-            
-            rel += "2. TABELA DE PONTOS:\n"
-            rel += f"{'i':<4} | {'xi':<12} | {'f(xi)':<12}\n"
-            rel += "-" * 35 + "\n"
-            for i, val in enumerate(tabela):
-                rel += f"{i:<4} | {a + i*h:<12.4f} | {val:<12.{casas}f}\n"
-
-            rel += f"\n3. ÁREA ESTIMADA (Regra dos Trapézios):\n"
-            rel += f"Fórmula: Área ≈ h * [f(x0)/2 + f(x1) + ... + f(xn)/2]\n"
-            rel += f"Área ≈ {area:.{casas}f}\n\n"
-
-            rel += f"4. ERROS:\n"
-            rel += f"|Ea|   (Arredondamento) <= {e_arr:.{casas}f}\n"
-            rel += f"|Etru| (Truncamento)     <= {e_tru:.{casas}f}\n"
-            rel += f"|Etot| (Erro Total)      <= {e_tot:.{casas}f}\n\n"
-
-            rel += f"5. RESULTADO FINAL (Representação Dupla):\n"
-            rel += f"A. Por parênteses: ∈ ({area:.{casas}f} ± {e_tot:.{casas}f})\n"
-            rel += f"B. Por colchetes:  ∈ [{lim_inf:.{casas}f}; {lim_sup:.{casas}f}]\n"
-            
             self.visor.insert(tk.END, rel)
 
         except Exception as e:
+            sys.stdout = sys.__stdout__
             messagebox.showerror("Erro", f"Houve um problema:\n{str(e)}")
 
 if __name__ == "__main__":
